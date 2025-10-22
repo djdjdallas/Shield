@@ -1,29 +1,47 @@
 {
   "expo": {
-    "name": "scamsheild",
-    "slug": "scamsheild",
+    "name": "Scam Shield",
+    "slug": "scam-shield",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#3B82F6"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.scamshield.app",
+      "infoPlist": {
+        "NSClipboardUsageDescription": "This app needs clipboard access to analyze suspicious messages you've copied.",
+        "NSUserTrackingUsageDescription": "This app does not track you. All analysis is done anonymously."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#3B82F6"
       },
+      "package": "com.scamshield.app",
+      "permissions": [],
       "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "scheme": "scamshield",
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_PROJECT_ID"
+      }
     }
   }
 }
