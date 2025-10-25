@@ -7,9 +7,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Linking,
+  Platform,
 } from 'react-native';
 import { MaterialIcons, FontAwesome5, Ionicons, Entypo } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Colors } from '../constants/colors';
+import { GradientColors } from '../constants/glassStyles';
 
 export default function InfoScreen() {
   const openLink = (url) => {
@@ -17,7 +21,12 @@ export default function InfoScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <LinearGradient
+      colors={GradientColors.backgroundVibrant}
+      style={styles.gradientBackground}
+      locations={[0, 0.4, 0.7, 1]}
+    >
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
       {/* How It Works Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -25,8 +34,9 @@ export default function InfoScreen() {
           <Text style={styles.sectionTitle}>How It Works</Text>
         </View>
 
-        <View style={styles.card}>
-          <View style={styles.stepContainer}>
+        <BlurView intensity={20} tint="light" style={styles.cardBlur}>
+          <View style={styles.card}>
+            <View style={styles.stepContainer}>
             <View style={styles.stepNumber}>
               <Text style={styles.stepNumberText}>1</Text>
             </View>
@@ -73,7 +83,8 @@ export default function InfoScreen() {
               </Text>
             </View>
           </View>
-        </View>
+          </View>
+        </BlurView>
       </View>
 
       {/* Common Scam Types */}
@@ -319,15 +330,19 @@ export default function InfoScreen() {
         <Text style={styles.versionText}>Version 1.0.0</Text>
       </View>
     </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  gradientBackground: {
     flex: 1,
-    backgroundColor: Colors.background,
+  },
+  scrollView: {
+    flex: 1,
   },
   content: {
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 40,
   },
   section: {
@@ -345,11 +360,21 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginLeft: 10,
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
+  cardBlur: {
+    borderRadius: 14,
+    overflow: 'hidden',
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: Colors.glassBorderLight,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  card: {
+    backgroundColor: Colors.glassWhiteLight,
+    padding: 20,
   },
   stepContainer: {
     flexDirection: 'row',

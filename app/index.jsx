@@ -1,5 +1,5 @@
 // Main scanner screen - the heart of Scam Shield
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -12,30 +12,45 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
-} from 'react-native';
-import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
-import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
+  Animated,
+} from "react-native";
+import * as Clipboard from "expo-clipboard";
+import * as Haptics from "expo-haptics";
+import { MaterialIcons, Ionicons, FontAwesome5 } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 
 // Import our custom components and utilities
-import { Colors } from '../constants/colors';
-import { quickPatternCheck } from '../constants/scamPatterns';
-import { analyzeWithClaude } from '../api/claude';
-import { saveToHistory } from '../utils/storage';
-import ResultCard from '../components/ResultCard';
+import { Colors } from "../constants/colors";
+import { GradientColors, AnimationDurations } from "../constants/glassStyles";
+import { quickPatternCheck } from "../constants/scamPatterns";
+import { analyzeWithClaude } from "../api/claude";
+import { saveToHistory } from "../utils/storage";
+import ResultCard from "../components/ResultCard";
 
 export default function ScannerScreen() {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [charCount, setCharCount] = useState(0);
   const [hasClipboardContent, setHasClipboardContent] = useState(false);
 
+  // Animation refs
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
   // Check clipboard on mount and focus
   useEffect(() => {
     checkClipboard();
+    // Fade in animation on mount
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: AnimationDurations.slow,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
   const checkClipboard = async () => {
@@ -43,7 +58,7 @@ export default function ScannerScreen() {
       const hasContent = await Clipboard.hasStringAsync();
       setHasClipboardContent(hasContent);
     } catch (error) {
-      console.log('Clipboard check error:', error);
+      console.log("Clipboard check error:", error);
     }
   };
 
@@ -53,11 +68,24 @@ export default function ScannerScreen() {
       if (text) {
         setMessage(text);
         setCharCount(text.length);
-        // Provide haptic feedback
+        // Provide haptic feedback and button animation
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 0.95,
+            duration: AnimationDurations.fast,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: AnimationDurations.fast,
+            useNativeDriver: true,
+          }),
+        ]).start();
       }
     } catch (error) {
-      Alert.alert('Error', 'Could not paste from clipboard');
+      Alert.alert("Error", "Could not paste from clipboard");
     }
   };
 
@@ -67,7 +95,7 @@ export default function ScannerScreen() {
   };
 
   const clearMessage = () => {
-    setMessage('');
+    setMessage("");
     setCharCount(0);
     setResult(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -75,16 +103,32 @@ export default function ScannerScreen() {
 
   const analyzeMessage = async () => {
     if (!message.trim()) {
-      Alert.alert('No Message', 'Please enter or paste a message to analyze');
+      Alert.alert("No Message", "Please enter or paste a message to analyze");
       return;
     }
 
     // Dismiss keyboard
     Keyboard.dismiss();
 
-    // Start loading
+    // Start loading and pulse animation
     setLoading(true);
     setResult(null);
+
+    // Start pulse animation for loading state
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: AnimationDurations.pulse / 2,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: AnimationDurations.pulse / 2,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
 
     try {
       // First, try offline pattern matching for quick results
@@ -96,24 +140,30 @@ export default function ScannerScreen() {
         await saveToHistory(message, offlineResult);
 
         // Provide strong haptic feedback for scam
-        if (offlineResult.verdict === 'scam') {
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        if (offlineResult.verdict === "scam") {
+          await Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Warning
+          );
         }
       }
 
       // Now try to get Claude's analysis for more detailed results
-      const apiKey = Constants.expoConfig?.extra?.ANTHROPIC_API_KEY || process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
-
-      if (!apiKey || apiKey === 'YOUR_ANTHROPIC_API_KEY_HERE') {
+      const apiKey =
+        Constants.expoConfig?.extra?.ANTHROPIC_API_KEY ||
+        Constants.manifest?.extra?.ANTHROPIC_API_KEY ||
+        process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
+      if (!apiKey || apiKey === "YOUR_ANTHROPIC_API_KEY_HERE") {
         // No API key configured - use offline result only
         if (!offlineResult) {
           setResult({
-            verdict: 'unknown',
+            verdict: "unknown",
             confidence: 0,
-            risk_level: 'unknown',
-            reasons: ['AI analysis unavailable'],
-            explanation: 'Please configure API key for full AI-powered analysis. Limited offline checking performed.',
-            action_recommended: 'Configure the app with an API key for complete scam detection.',
+            risk_level: "unknown",
+            reasons: ["AI analysis unavailable"],
+            explanation:
+              "Please configure API key for full AI-powered analysis. Limited offline checking performed.",
+            action_recommended:
+              "Configure the app with an API key for complete scam detection.",
             isOffline: true,
           });
         }
@@ -126,113 +176,167 @@ export default function ScannerScreen() {
           await saveToHistory(message, claudeResult);
 
           // Haptic feedback based on verdict
-          if (claudeResult.verdict === 'scam') {
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          } else if (claudeResult.verdict === 'likely_legitimate') {
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          if (claudeResult.verdict === "scam") {
+            await Haptics.notificationAsync(
+              Haptics.NotificationFeedbackType.Warning
+            );
+          } else if (claudeResult.verdict === "likely_legitimate") {
+            await Haptics.notificationAsync(
+              Haptics.NotificationFeedbackType.Success
+            );
           } else {
             await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           }
         } else if (!offlineResult) {
           // API failed and no offline result
-          throw new Error('Analysis failed');
+          throw new Error("Analysis failed");
         }
       }
     } catch (error) {
-      console.error('Analysis error:', error);
+      console.error("Analysis error:", error);
 
       // If we don't have an offline result, show error
       if (!result) {
         Alert.alert(
-          'Analysis Error',
-          'Could not analyze the message. Please check your internet connection and try again.',
+          "Analysis Error",
+          "Could not analyze the message. Please check your internet connection and try again."
         );
       }
     } finally {
       setLoading(false);
+      // Stop pulse animation
+      pulseAnim.stopAnimation();
+      pulseAnim.setValue(1);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <LinearGradient
+      colors={GradientColors.backgroundVibrant}
+      style={styles.gradientBackground}
+      locations={[0, 0.4, 0.7, 1]}
     >
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Header Section */}
-        <View style={styles.header}>
-          <MaterialIcons name="security" size={48} color={Colors.primary} />
-          <Text style={styles.title}>Scan Suspicious Messages</Text>
-          <Text style={styles.subtitle}>
-            Paste or type any suspicious text message to check if it's a scam
-          </Text>
-        </View>
-
-        {/* Input Section */}
-        <View style={styles.inputSection}>
-          {/* Quick Paste Button */}
-          {hasClipboardContent && !message && (
-            <TouchableOpacity
-              style={styles.pasteButton}
-              onPress={pasteFromClipboard}
-              activeOpacity={0.8}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header Section */}
+          <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+            <LinearGradient
+              colors={[Colors.primary, Colors.purple, Colors.pink]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconGradient}
             >
-              <Ionicons name="clipboard" size={24} color="#FFFFFF" />
-              <Text style={styles.pasteButtonText}>Paste from Clipboard</Text>
-            </TouchableOpacity>
-          )}
+              <MaterialIcons name="security" size={48} color="#FFFFFF" />
+            </LinearGradient>
+            <Text style={styles.title}>Scan Suspicious Messages</Text>
+            <Text style={styles.subtitle}>
+              Paste or type any suspicious text message to check if it's a scam
+            </Text>
+          </Animated.View>
 
-          {/* Text Input */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Paste or type your suspicious message here..."
-              placeholderTextColor={Colors.textMuted}
-              value={message}
-              onChangeText={handleTextChange}
-              multiline
-              maxLength={2000}
-              textAlignVertical="top"
-            />
-
-            {/* Character count and clear button */}
-            <View style={styles.inputFooter}>
-              <Text style={styles.charCount}>{charCount} / 2000</Text>
-              {message.length > 0 && (
-                <TouchableOpacity onPress={clearMessage}>
-                  <Ionicons name="close-circle" size={24} color={Colors.textMuted} />
+          {/* Input Section */}
+          <View style={styles.inputSection}>
+            {/* Quick Paste Button */}
+            {hasClipboardContent && !message && (
+              <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                <TouchableOpacity
+                  style={styles.pasteButtonContainer}
+                  onPress={pasteFromClipboard}
+                  activeOpacity={0.9}
+                >
+                  <LinearGradient
+                    colors={[Colors.primary, Colors.cyan]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.pasteButton}
+                  >
+                    <Ionicons name="clipboard" size={24} color="#FFFFFF" />
+                    <Text style={styles.pasteButtonText}>Paste from Clipboard</Text>
+                  </LinearGradient>
                 </TouchableOpacity>
-              )}
-            </View>
-          </View>
-
-          {/* Analyze Button */}
-          <TouchableOpacity
-            style={[
-              styles.analyzeButton,
-              (!message.trim() || loading) && styles.analyzeButtonDisabled,
-            ]}
-            onPress={analyzeMessage}
-            disabled={!message.trim() || loading}
-            activeOpacity={0.8}
-          >
-            {loading ? (
-              <>
-                <ActivityIndicator color="#FFFFFF" size="small" />
-                <Text style={styles.analyzeButtonText}>Analyzing...</Text>
-              </>
-            ) : (
-              <>
-                <FontAwesome5 name="search" size={20} color="#FFFFFF" />
-                <Text style={styles.analyzeButtonText}>Analyze Now</Text>
-              </>
+              </Animated.View>
             )}
-          </TouchableOpacity>
-        </View>
+
+            {/* Text Input with Glass Effect */}
+            <BlurView intensity={20} tint="light" style={styles.inputBlurContainer}>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Paste or type your suspicious message here..."
+                  placeholderTextColor={Colors.textMuted}
+                  value={message}
+                  onChangeText={handleTextChange}
+                  multiline
+                  maxLength={2000}
+                  textAlignVertical="top"
+                />
+
+                {/* Character count and clear button */}
+                <View style={styles.inputFooter}>
+                  <LinearGradient
+                    colors={charCount > 1800 ? [Colors.warning, Colors.dangerLight] : [Colors.primary, Colors.cyan]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.charCountBadge}
+                  >
+                    <Text style={styles.charCount}>{charCount} / 2000</Text>
+                  </LinearGradient>
+                  {message.length > 0 && (
+                    <TouchableOpacity onPress={clearMessage} style={styles.clearButton}>
+                      <Ionicons
+                        name="close-circle"
+                        size={24}
+                        color={Colors.danger}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </BlurView>
+
+            {/* Analyze Button */}
+            <Animated.View style={{ transform: [{ scale: loading ? pulseAnim : 1 }] }}>
+              <TouchableOpacity
+                style={styles.analyzeButtonContainer}
+                onPress={analyzeMessage}
+                disabled={!message.trim() || loading}
+                activeOpacity={0.9}
+              >
+                <LinearGradient
+                  colors={
+                    !message.trim() || loading
+                      ? [Colors.textMuted, Colors.textLight]
+                      : [Colors.primary, Colors.purple, Colors.pink]
+                  }
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[
+                    styles.analyzeButton,
+                    (!message.trim() || loading) && styles.analyzeButtonDisabled,
+                  ]}
+                >
+                  {loading ? (
+                    <>
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                      <Text style={styles.analyzeButtonText}>Analyzing...</Text>
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesome5 name="search" size={20} color="#FFFFFF" />
+                      <Text style={styles.analyzeButtonText}>Analyze Now</Text>
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
 
         {/* Results Section */}
         {result && (
@@ -241,89 +345,136 @@ export default function ScannerScreen() {
           </View>
         )}
 
-        {/* Tips Section (when no result) */}
-        {!result && !loading && (
-          <View style={styles.tipsSection}>
-            <Text style={styles.tipsTitle}>Common Scam Signs:</Text>
-            <View style={styles.tipItem}>
-              <MaterialIcons name="warning" size={20} color={Colors.warning} />
-              <Text style={styles.tipText}>Urgent language & threats</Text>
-            </View>
-            <View style={styles.tipItem}>
-              <MaterialIcons name="link" size={20} color={Colors.warning} />
-              <Text style={styles.tipText}>Suspicious shortened URLs</Text>
-            </View>
-            <View style={styles.tipItem}>
-              <MaterialIcons name="attach-money" size={20} color={Colors.warning} />
-              <Text style={styles.tipText}>Requests for immediate payment</Text>
-            </View>
-            <View style={styles.tipItem}>
-              <MaterialIcons name="error" size={20} color={Colors.warning} />
-              <Text style={styles.tipText}>Poor grammar & spelling</Text>
-            </View>
-          </View>
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {/* Tips Section (when no result) */}
+          {!result && !loading && (
+            <BlurView intensity={15} tint="light" style={styles.tipsSectionBlur}>
+              <View style={styles.tipsSection}>
+                <LinearGradient
+                  colors={[Colors.warning, Colors.dangerLight]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.tipsTitleGradient}
+                >
+                  <Text style={styles.tipsTitle}>Common Scam Signs:</Text>
+                </LinearGradient>
+                <View style={styles.tipItem}>
+                  <MaterialIcons name="warning" size={20} color={Colors.warning} />
+                  <Text style={styles.tipText}>Urgent language & threats</Text>
+                </View>
+                <View style={styles.tipItem}>
+                  <MaterialIcons name="link" size={20} color={Colors.warning} />
+                  <Text style={styles.tipText}>Suspicious shortened URLs</Text>
+                </View>
+                <View style={styles.tipItem}>
+                  <MaterialIcons
+                    name="attach-money"
+                    size={20}
+                    color={Colors.warning}
+                  />
+                  <Text style={styles.tipText}>Requests for immediate payment</Text>
+                </View>
+                <View style={styles.tipItem}>
+                  <MaterialIcons name="error" size={20} color={Colors.warning} />
+                  <Text style={styles.tipText}>Poor grammar & spelling</Text>
+                </View>
+              </View>
+            </BlurView>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientBackground: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 40,
   },
   header: {
-    alignItems: 'center',
-    marginTop: 20,
+    alignItems: "center",
+    marginTop: 0,
     marginBottom: 30,
   },
+  iconGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: "bold",
     color: Colors.text,
-    marginTop: 10,
+    marginTop: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 15,
     color: Colors.textLight,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 8,
     paddingHorizontal: 20,
+    lineHeight: 22,
   },
   inputSection: {
     marginBottom: 20,
   },
-  pasteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
+  pasteButtonContainer: {
     marginBottom: 15,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  pasteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 16,
   },
   pasteButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "700",
     marginLeft: 8,
   },
-  inputContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 15,
+  inputBlurContainer: {
+    borderRadius: 16,
+    overflow: "hidden",
     marginBottom: 15,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  inputContainer: {
+    backgroundColor: Colors.glassWhiteLight,
+    padding: 16,
   },
   textInput: {
     fontSize: 16,
@@ -332,58 +483,92 @@ const styles = StyleSheet.create({
     maxHeight: 200,
   },
   inputFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 12,
+  },
+  charCountBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   charCount: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  clearButton: {
+    padding: 4,
+  },
+  analyzeButtonContainer: {
+    shadowColor: Colors.purple,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
   },
   analyzeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    paddingVertical: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
     paddingHorizontal: 30,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   analyzeButtonDisabled: {
-    backgroundColor: Colors.textMuted,
-    opacity: 0.5,
+    opacity: 0.6,
   },
   analyzeButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 10,
   },
   resultsSection: {
     marginTop: 20,
   },
-  tipsSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
+  tipsSectionBlur: {
+    borderRadius: 16,
+    overflow: "hidden",
     marginTop: 30,
+    borderWidth: 1,
+    borderColor: Colors.glassBorderLight,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  tipsSection: {
+    backgroundColor: Colors.glassWhiteLight,
+    padding: 20,
+  },
+  tipsTitleGradient: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginBottom: 16,
+    alignSelf: "flex-start",
   },
   tipsTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 15,
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
   tipItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    padding: 10,
+    borderRadius: 10,
   },
   tipText: {
     fontSize: 14,
-    color: Colors.textLight,
+    color: Colors.text,
     marginLeft: 10,
     flex: 1,
+    fontWeight: "500",
   },
 });

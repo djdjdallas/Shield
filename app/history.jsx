@@ -8,10 +8,14 @@ import {
   TouchableOpacity,
   Alert,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Colors } from '../constants/colors';
+import { GradientColors } from '../constants/glassStyles';
 import {
   getScanHistory,
   deleteHistoryItem,
@@ -143,9 +147,22 @@ export default function HistoryScreen() {
   const renderHistoryItem = ({ item }) => {
     const { result, message, timestamp } = item;
 
+    const getVerdictGradient = (verdict) => {
+      switch (verdict) {
+        case 'scam':
+          return GradientColors.danger;
+        case 'suspicious':
+          return GradientColors.warning;
+        case 'likely_legitimate':
+          return GradientColors.success;
+        default:
+          return GradientColors.bluePurple;
+      }
+    };
+
     return (
       <TouchableOpacity
-        style={styles.historyCard}
+        style={styles.historyCardContainer}
         onPress={() => {
           // Future: Navigate to detail view
           Alert.alert(
@@ -153,55 +170,71 @@ export default function HistoryScreen() {
             `Message: ${message}\n\nVerdict: ${result.verdict}\nConfidence: ${result.confidence}%\nExplanation: ${result.explanation}`
           );
         }}
-        activeOpacity={0.7}
+        activeOpacity={0.9}
       >
-        <View style={styles.cardContent}>
-          {/* Verdict Icon */}
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: `${getVerdictColor(result.verdict)}20` },
-            ]}
-          >
-            <FontAwesome5
-              name={getVerdictIcon(result.verdict)}
-              size={24}
-              color={getVerdictColor(result.verdict)}
-            />
-          </View>
+        <BlurView intensity={20} tint="light" style={styles.historyCard}>
+          <View style={styles.cardContent}>
+            {/* Verdict Icon with Gradient */}
+            <LinearGradient
+              colors={getVerdictGradient(result.verdict)}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconContainer}
+            >
+              <FontAwesome5
+                name={getVerdictIcon(result.verdict)}
+                size={24}
+                color="#FFFFFF"
+              />
+            </LinearGradient>
 
-          {/* Message Content */}
-          <View style={styles.messageContent}>
-            <View style={styles.verdictRow}>
-              <Text
-                style={[
-                  styles.verdictText,
-                  { color: getVerdictColor(result.verdict) },
-                ]}
-              >
-                {result.verdict.replace(/_/g, ' ').toUpperCase()}
+            {/* Message Content */}
+            <View style={styles.messageContent}>
+              <View style={styles.verdictRow}>
+                <Text
+                  style={[
+                    styles.verdictText,
+                    { color: getVerdictColor(result.verdict) },
+                  ]}
+                >
+                  {result.verdict.replace(/_/g, ' ').toUpperCase()}
+                </Text>
+                <LinearGradient
+                  colors={getVerdictGradient(result.verdict)}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.confidenceBadge}
+                >
+                  <Text style={styles.confidenceText}>
+                    {result.confidence}%
+                  </Text>
+                </LinearGradient>
+              </View>
+
+              <Text style={styles.messageText} numberOfLines={2}>
+                {message}
               </Text>
-              <Text style={styles.confidenceText}>
-                {result.confidence}% confidence
-              </Text>
+
+              <Text style={styles.timeText}>{formatDate(timestamp)}</Text>
             </View>
 
-            <Text style={styles.messageText} numberOfLines={2}>
-              {message}
-            </Text>
-
-            <Text style={styles.timeText}>{formatDate(timestamp)}</Text>
+            {/* Delete Button */}
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDeleteItem(item)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <LinearGradient
+                colors={[Colors.danger, Colors.dangerDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.deleteIconGradient}
+              >
+                <Ionicons name="trash-outline" size={18} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
-
-          {/* Delete Button */}
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => handleDeleteItem(item)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="trash-outline" size={20} color={Colors.textMuted} />
-          </TouchableOpacity>
-        </View>
+        </BlurView>
       </TouchableOpacity>
     );
   };
@@ -220,40 +253,76 @@ export default function HistoryScreen() {
     <View style={styles.header}>
       {/* Statistics Cards */}
       <View style={styles.statsContainer}>
-        <View style={[styles.statCard, { backgroundColor: Colors.scamBackground }]}>
-          <Text style={[styles.statNumber, { color: Colors.danger }]}>
-            {statistics.scamsDetected || 0}
-          </Text>
-          <Text style={styles.statLabel}>Scams Detected</Text>
-        </View>
+        <LinearGradient
+          colors={GradientColors.danger}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.statGradient}
+        >
+          <BlurView intensity={20} tint="light" style={styles.statBlur}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>
+                {statistics.scamsDetected || 0}
+              </Text>
+              <Text style={styles.statLabel}>Scams Detected</Text>
+            </View>
+          </BlurView>
+        </LinearGradient>
 
-        <View style={[styles.statCard, { backgroundColor: Colors.suspiciousBackground }]}>
-          <Text style={[styles.statNumber, { color: Colors.warning }]}>
-            {statistics.suspiciousCount || 0}
-          </Text>
-          <Text style={styles.statLabel}>Suspicious</Text>
-        </View>
+        <LinearGradient
+          colors={GradientColors.warning}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.statGradient}
+        >
+          <BlurView intensity={20} tint="light" style={styles.statBlur}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>
+                {statistics.suspiciousCount || 0}
+              </Text>
+              <Text style={styles.statLabel}>Suspicious</Text>
+            </View>
+          </BlurView>
+        </LinearGradient>
 
-        <View style={[styles.statCard, { backgroundColor: Colors.safeBackground }]}>
-          <Text style={[styles.statNumber, { color: Colors.success }]}>
-            {statistics.safeCount || 0}
-          </Text>
-          <Text style={styles.statLabel}>Safe</Text>
-        </View>
+        <LinearGradient
+          colors={GradientColors.success}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.statGradient}
+        >
+          <BlurView intensity={20} tint="light" style={styles.statBlur}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>
+                {statistics.safeCount || 0}
+              </Text>
+              <Text style={styles.statLabel}>Safe</Text>
+            </View>
+          </BlurView>
+        </LinearGradient>
       </View>
 
       {/* Total scans and clear button */}
       <View style={styles.headerActions}>
-        <Text style={styles.totalScans}>
-          Total Scans: {statistics.totalScans || 0}
-        </Text>
+        <LinearGradient
+          colors={[Colors.primary, Colors.cyan]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.totalScansBadge}
+        >
+          <Text style={styles.totalScans}>
+            Total Scans: {statistics.totalScans || 0}
+          </Text>
+        </LinearGradient>
         {history.length > 0 && (
           <TouchableOpacity
-            style={styles.clearButton}
+            style={styles.clearButtonContainer}
             onPress={handleClearHistory}
           >
-            <MaterialIcons name="delete-sweep" size={20} color={Colors.danger} />
-            <Text style={styles.clearButtonText}>Clear All</Text>
+            <BlurView intensity={15} tint="light" style={styles.clearButton}>
+              <MaterialIcons name="delete-sweep" size={20} color={Colors.danger} />
+              <Text style={styles.clearButtonText}>Clear All</Text>
+            </BlurView>
           </TouchableOpacity>
         )}
       </View>
@@ -269,7 +338,11 @@ export default function HistoryScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={GradientColors.backgroundVibrant}
+      style={styles.gradientBackground}
+      locations={[0, 0.4, 0.7, 1]}
+    >
       <FlatList
         data={history}
         renderItem={renderHistoryItem}
@@ -286,28 +359,27 @@ export default function HistoryScreen() {
           />
         }
       />
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  gradientBackground: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
   },
   loadingText: {
     fontSize: 16,
-    color: Colors.textLight,
+    color: Colors.text,
+    fontWeight: '600',
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 10,
   },
   statsContainer: {
@@ -316,20 +388,38 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     gap: 10,
   },
-  statCard: {
+  statGradient: {
     flex: 1,
-    padding: 15,
+    borderRadius: 14,
+    padding: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  statBlur: {
     borderRadius: 12,
+    overflow: 'hidden',
+  },
+  statCard: {
+    padding: 15,
     alignItems: 'center',
+    backgroundColor: Colors.glassWhiteLight,
   },
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: Colors.textLight,
+    color: Colors.text,
     marginTop: 4,
+    fontWeight: '600',
   },
   headerActions: {
     flexDirection: 'row',
@@ -337,41 +427,63 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
+  totalScansBadge: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   totalScans: {
     fontSize: 14,
-    color: Colors.textLight,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  clearButtonContainer: {
+    shadowColor: Colors.danger,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   clearButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    backgroundColor: Colors.glassWhiteLight,
     borderWidth: 1,
-    borderColor: Colors.danger,
+    borderColor: Colors.glassBorder,
+    overflow: 'hidden',
   },
   clearButtonText: {
     color: Colors.danger,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     marginLeft: 6,
   },
   listContent: {
     paddingBottom: 20,
   },
-  historyCard: {
-    backgroundColor: '#FFFFFF',
+  historyCardContainer: {
     marginHorizontal: 20,
     marginBottom: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  historyCard: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.glassBorderLight,
+    backgroundColor: Colors.glassWhiteLight,
   },
   cardContent: {
     flexDirection: 'row',
@@ -379,12 +491,17 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   messageContent: {
     flex: 1,
@@ -392,29 +509,43 @@ const styles = StyleSheet.create({
   verdictRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
     gap: 8,
   },
   verdictText: {
     fontSize: 14,
     fontWeight: 'bold',
   },
+  confidenceBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
   confidenceText: {
-    fontSize: 12,
-    color: Colors.textMuted,
+    fontSize: 11,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   messageText: {
     fontSize: 14,
-    color: Colors.textLight,
+    color: Colors.text,
     marginBottom: 4,
     lineHeight: 18,
+    fontWeight: '500',
   },
   timeText: {
     fontSize: 12,
     color: Colors.textMuted,
   },
   deleteButton: {
-    padding: 8,
+    padding: 4,
+  },
+  deleteIconGradient: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyListContainer: {
     flex: 1,
