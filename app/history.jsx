@@ -1,5 +1,5 @@
 // History screen - displays past scan results
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import {
   View,
   Text,
@@ -57,7 +57,7 @@ export default function HistoryScreen() {
     loadHistory();
   };
 
-  const handleDeleteItem = (item) => {
+  const handleDeleteItem = useCallback((item) => {
     Alert.alert(
       'Delete Entry',
       'Are you sure you want to delete this scan from history?',
@@ -75,9 +75,9 @@ export default function HistoryScreen() {
         },
       ]
     );
-  };
+  }, [loadHistory]);
 
-  const handleClearHistory = () => {
+  const handleClearHistory = useCallback(() => {
     Alert.alert(
       'Clear All History',
       'Are you sure you want to delete all scan history? This action cannot be undone.',
@@ -95,9 +95,9 @@ export default function HistoryScreen() {
         },
       ]
     );
-  };
+  }, [loadHistory]);
 
-  const getVerdictColor = (verdict) => {
+  const getVerdictColor = useCallback((verdict) => {
     switch (verdict) {
       case 'scam':
         return Colors.danger;
@@ -108,9 +108,9 @@ export default function HistoryScreen() {
       default:
         return Colors.textLight;
     }
-  };
+  }, []);
 
-  const getVerdictIcon = (verdict) => {
+  const getVerdictIcon = useCallback((verdict) => {
     switch (verdict) {
       case 'scam':
         return 'shield-off';
@@ -121,9 +121,9 @@ export default function HistoryScreen() {
       default:
         return 'help-circle';
     }
-  };
+  }, []);
 
-  const formatDate = (timestamp) => {
+  const formatDate = useCallback((timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now - date;
@@ -142,9 +142,9 @@ export default function HistoryScreen() {
       day: 'numeric',
       year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
     });
-  };
+  }, []);
 
-  const renderHistoryItem = ({ item }) => {
+  const renderHistoryItem = useCallback(({ item }) => {
     const { result, message, timestamp } = item;
 
     const getVerdictGradient = (verdict) => {
@@ -160,6 +160,8 @@ export default function HistoryScreen() {
       }
     };
 
+    const verdictLabel = result.verdict.replace(/_/g, ' ');
+
     return (
       <TouchableOpacity
         style={styles.historyCardContainer}
@@ -171,6 +173,10 @@ export default function HistoryScreen() {
           );
         }}
         activeOpacity={0.9}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`Scan result: ${verdictLabel}, ${result.confidence} percent confidence, scanned ${formatDate(timestamp)}`}
+        accessibilityHint="Double tap to view full scan details"
       >
         <BlurView intensity={20} tint="light" style={styles.historyCard}>
           <View style={styles.cardContent}>
@@ -223,6 +229,10 @@ export default function HistoryScreen() {
               style={styles.deleteButton}
               onPress={() => handleDeleteItem(item)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Delete scan"
+              accessibilityHint="Deletes this scan from history"
             >
               <LinearGradient
                 colors={[Colors.danger, Colors.dangerDark]}
@@ -237,19 +247,24 @@ export default function HistoryScreen() {
         </BlurView>
       </TouchableOpacity>
     );
-  };
+  }, [formatDate, handleDeleteItem]);
 
-  const renderEmptyList = () => (
-    <View style={styles.emptyContainer}>
+  const renderEmptyList = useCallback(() => (
+    <View
+      style={styles.emptyContainer}
+      accessible={true}
+      accessibilityRole="text"
+      accessibilityLabel="No scan history. Your scan results will appear here after you analyze messages."
+    >
       <MaterialIcons name="history" size={64} color={Colors.textMuted} />
       <Text style={styles.emptyTitle}>No Scan History</Text>
       <Text style={styles.emptyText}>
         Your scan results will appear here after you analyze messages
       </Text>
     </View>
-  );
+  ), []);
 
-  const renderHeader = () => (
+  const renderHeader = useMemo(() => (
     <View style={styles.header}>
       {/* Statistics Cards */}
       <View style={styles.statsContainer}>
@@ -258,9 +273,15 @@ export default function HistoryScreen() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.statGradient}
+          accessible={false}
         >
           <BlurView intensity={20} tint="light" style={styles.statBlur}>
-            <View style={styles.statCard}>
+            <View
+              style={styles.statCard}
+              accessible={true}
+              accessibilityRole="summary"
+              accessibilityLabel={`Scams detected: ${statistics.scamsDetected || 0}`}
+            >
               <Text style={styles.statNumber}>
                 {statistics.scamsDetected || 0}
               </Text>
@@ -274,9 +295,15 @@ export default function HistoryScreen() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.statGradient}
+          accessible={false}
         >
           <BlurView intensity={20} tint="light" style={styles.statBlur}>
-            <View style={styles.statCard}>
+            <View
+              style={styles.statCard}
+              accessible={true}
+              accessibilityRole="summary"
+              accessibilityLabel={`Suspicious messages: ${statistics.suspiciousCount || 0}`}
+            >
               <Text style={styles.statNumber}>
                 {statistics.suspiciousCount || 0}
               </Text>
@@ -290,9 +317,15 @@ export default function HistoryScreen() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.statGradient}
+          accessible={false}
         >
           <BlurView intensity={20} tint="light" style={styles.statBlur}>
-            <View style={styles.statCard}>
+            <View
+              style={styles.statCard}
+              accessible={true}
+              accessibilityRole="summary"
+              accessibilityLabel={`Safe messages: ${statistics.safeCount || 0}`}
+            >
               <Text style={styles.statNumber}>
                 {statistics.safeCount || 0}
               </Text>
@@ -318,6 +351,10 @@ export default function HistoryScreen() {
           <TouchableOpacity
             style={styles.clearButtonContainer}
             onPress={handleClearHistory}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Clear all history"
+            accessibilityHint="Deletes all scan history. This action cannot be undone."
           >
             <BlurView intensity={15} tint="light" style={styles.clearButton}>
               <MaterialIcons name="delete-sweep" size={20} color={Colors.danger} />
@@ -327,7 +364,7 @@ export default function HistoryScreen() {
         )}
       </View>
     </View>
-  );
+  ), [statistics, history.length, handleClearHistory]);
 
   if (loading) {
     return (
@@ -356,8 +393,12 @@ export default function HistoryScreen() {
             onRefresh={onRefresh}
             colors={[Colors.primary]}
             tintColor={Colors.primary}
+            accessibilityLabel="Pull to refresh scan history"
           />
         }
+        accessible={true}
+        accessibilityRole="list"
+        accessibilityLabel={`Scan history. ${history.length} ${history.length === 1 ? 'item' : 'items'}.`}
       />
     </LinearGradient>
   );

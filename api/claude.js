@@ -6,9 +6,9 @@
 
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 
-// For production, replace with your serverless function URL
-// Example: 'https://your-api.vercel.app/api/analyze'
-const SERVERLESS_ENDPOINT = null; // Set this to your serverless function URL in production
+// For production, use serverless endpoint from environment variable
+// Set EXPO_PUBLIC_API_ENDPOINT in your .env file after deploying serverless function
+const SERVERLESS_ENDPOINT = process.env.EXPO_PUBLIC_API_ENDPOINT || null;
 
 // The specialized prompt for scam detection
 const SCAM_DETECTION_PROMPT = `<role>You are an expert cybersecurity analyst specializing in SMS/text message scam detection.</role>
@@ -43,11 +43,11 @@ Return ONLY valid JSON with this structure:
 </message_to_analyze>`;
 
 // Main function to analyze message with Claude
-export async function analyzeWithClaude(message, apiKey) {
+export async function analyzeWithClaude(message, apiKey, metadata = {}) {
   try {
     // If serverless endpoint is configured, use it (recommended for production)
     if (SERVERLESS_ENDPOINT) {
-      return await callServerlessFunction(message);
+      return await callServerlessFunction(message, metadata);
     }
 
     // Direct API call (development only - NOT for production)
@@ -106,13 +106,20 @@ export async function analyzeWithClaude(message, apiKey) {
 }
 
 // Function to call serverless endpoint (recommended for production)
-async function callServerlessFunction(message) {
+async function callServerlessFunction(message, metadata = {}) {
   try {
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add optional metadata headers for server-side logging
+    if (metadata.deviceId) headers['x-device-id'] = metadata.deviceId;
+    if (metadata.appVersion) headers['x-app-version'] = metadata.appVersion;
+    if (metadata.userId) headers['x-user-id'] = metadata.userId;
+
     const response = await fetch(SERVERLESS_ENDPOINT, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ message }),
     });
 
@@ -194,7 +201,7 @@ const responseCache = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Function to get cached response or make new API call
-export async function analyzeWithCache(message, apiKey) {
+export async function analyzeWithCache(message, apiKey, metadata = {}) {
   // Generate cache key from message
   const cacheKey = message.trim().toLowerCase();
 
@@ -205,7 +212,7 @@ export async function analyzeWithCache(message, apiKey) {
   }
 
   // Make API call
-  const result = await analyzeWithClaude(message, apiKey);
+  const result = await analyzeWithClaude(message, apiKey, metadata);
 
   // Cache the result
   if (result) {

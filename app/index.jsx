@@ -1,5 +1,5 @@
 // Main scanner screen - the heart of Scam Shield
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -53,16 +53,16 @@ export default function ScannerScreen() {
     }).start();
   }, []);
 
-  const checkClipboard = async () => {
+  const checkClipboard = useCallback(async () => {
     try {
       const hasContent = await Clipboard.hasStringAsync();
       setHasClipboardContent(hasContent);
     } catch (error) {
       console.log("Clipboard check error:", error);
     }
-  };
+  }, []);
 
-  const pasteFromClipboard = async () => {
+  const pasteFromClipboard = useCallback(async () => {
     try {
       const text = await Clipboard.getStringAsync();
       if (text) {
@@ -87,21 +87,21 @@ export default function ScannerScreen() {
     } catch (error) {
       Alert.alert("Error", "Could not paste from clipboard");
     }
-  };
+  }, [scaleAnim]);
 
-  const handleTextChange = (text) => {
+  const handleTextChange = useCallback((text) => {
     setMessage(text);
     setCharCount(text.length);
-  };
+  }, []);
 
-  const clearMessage = () => {
+  const clearMessage = useCallback(() => {
     setMessage("");
     setCharCount(0);
     setResult(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
+  }, []);
 
-  const analyzeMessage = async () => {
+  const analyzeMessage = useCallback(async () => {
     if (!message.trim()) {
       Alert.alert("No Message", "Please enter or paste a message to analyze");
       return;
@@ -208,7 +208,7 @@ export default function ScannerScreen() {
       pulseAnim.stopAnimation();
       pulseAnim.setValue(1);
     }
-  };
+  }, [message, pulseAnim]);
 
   return (
     <LinearGradient
@@ -226,17 +226,31 @@ export default function ScannerScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Header Section */}
-          <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+          <Animated.View
+            style={[styles.header, { opacity: fadeAnim }]}
+            accessible={true}
+            accessibilityRole="header"
+            accessibilityLabel="Scam Shield Scanner"
+          >
             <LinearGradient
               colors={[Colors.primary, Colors.purple, Colors.pink]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.iconGradient}
+              accessible={false}
             >
               <MaterialIcons name="security" size={48} color="#FFFFFF" />
             </LinearGradient>
-            <Text style={styles.title}>Scan Suspicious Messages</Text>
-            <Text style={styles.subtitle}>
+            <Text
+              style={styles.title}
+              accessibilityRole="text"
+            >
+              Scan Suspicious Messages
+            </Text>
+            <Text
+              style={styles.subtitle}
+              accessibilityRole="text"
+            >
               Paste or type any suspicious text message to check if it's a scam
             </Text>
           </Animated.View>
@@ -250,6 +264,10 @@ export default function ScannerScreen() {
                   style={styles.pasteButtonContainer}
                   onPress={pasteFromClipboard}
                   activeOpacity={0.9}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Paste from clipboard"
+                  accessibilityHint="Pastes text from your clipboard into the message input"
                 >
                   <LinearGradient
                     colors={[Colors.primary, Colors.cyan]}
@@ -276,6 +294,10 @@ export default function ScannerScreen() {
                   multiline
                   maxLength={2000}
                   textAlignVertical="top"
+                  accessible={true}
+                  accessibilityLabel="Message input"
+                  accessibilityHint="Enter or paste the suspicious message you want to analyze. Maximum 2000 characters."
+                  accessibilityValue={{ text: message || "Empty" }}
                 />
 
                 {/* Character count and clear button */}
@@ -285,11 +307,26 @@ export default function ScannerScreen() {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.charCountBadge}
+                    accessible={false}
                   >
-                    <Text style={styles.charCount}>{charCount} / 2000</Text>
+                    <Text
+                      style={styles.charCount}
+                      accessible={true}
+                      accessibilityRole="text"
+                      accessibilityLabel={`Character count: ${charCount} of 2000 characters`}
+                    >
+                      {charCount} / 2000
+                    </Text>
                   </LinearGradient>
                   {message.length > 0 && (
-                    <TouchableOpacity onPress={clearMessage} style={styles.clearButton}>
+                    <TouchableOpacity
+                      onPress={clearMessage}
+                      style={styles.clearButton}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear message"
+                      accessibilityHint="Clears the current message from the input field"
+                    >
                       <Ionicons
                         name="close-circle"
                         size={24}
@@ -308,6 +345,11 @@ export default function ScannerScreen() {
                 onPress={analyzeMessage}
                 disabled={!message.trim() || loading}
                 activeOpacity={0.9}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={loading ? "Analyzing message" : "Analyze message"}
+                accessibilityHint={!message.trim() ? "Enter a message first to analyze" : "Analyzes the message for scam indicators using AI"}
+                accessibilityState={{ disabled: !message.trim() || loading, busy: loading }}
               >
                 <LinearGradient
                   colors={
@@ -347,25 +389,50 @@ export default function ScannerScreen() {
 
           {/* Tips Section (when no result) */}
           {!result && !loading && (
-            <BlurView intensity={15} tint="light" style={styles.tipsSectionBlur}>
+            <BlurView
+              intensity={15}
+              tint="light"
+              style={styles.tipsSectionBlur}
+              accessible={true}
+              accessibilityRole="summary"
+              accessibilityLabel="Common scam warning signs"
+            >
               <View style={styles.tipsSection}>
                 <LinearGradient
                   colors={[Colors.warning, Colors.dangerLight]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.tipsTitleGradient}
+                  accessible={false}
                 >
-                  <Text style={styles.tipsTitle}>Common Scam Signs:</Text>
+                  <Text
+                    style={styles.tipsTitle}
+                    accessibilityRole="header"
+                  >
+                    Common Scam Signs:
+                  </Text>
                 </LinearGradient>
-                <View style={styles.tipItem}>
+                <View
+                  style={styles.tipItem}
+                  accessible={true}
+                  accessibilityRole="text"
+                >
                   <MaterialIcons name="warning" size={20} color={Colors.warning} />
                   <Text style={styles.tipText}>Urgent language & threats</Text>
                 </View>
-                <View style={styles.tipItem}>
+                <View
+                  style={styles.tipItem}
+                  accessible={true}
+                  accessibilityRole="text"
+                >
                   <MaterialIcons name="link" size={20} color={Colors.warning} />
                   <Text style={styles.tipText}>Suspicious shortened URLs</Text>
                 </View>
-                <View style={styles.tipItem}>
+                <View
+                  style={styles.tipItem}
+                  accessible={true}
+                  accessibilityRole="text"
+                >
                   <MaterialIcons
                     name="attach-money"
                     size={20}
@@ -373,7 +440,11 @@ export default function ScannerScreen() {
                   />
                   <Text style={styles.tipText}>Requests for immediate payment</Text>
                 </View>
-                <View style={styles.tipItem}>
+                <View
+                  style={styles.tipItem}
+                  accessible={true}
+                  accessibilityRole="text"
+                >
                   <MaterialIcons name="error" size={20} color={Colors.warning} />
                   <Text style={styles.tipText}>Poor grammar & spelling</Text>
                 </View>

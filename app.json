@@ -17,9 +17,25 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.scamshield.app",
+      "buildNumber": "1",
       "infoPlist": {
         "NSClipboardUsageDescription": "This app needs clipboard access to analyze suspicious messages you've copied.",
-        "NSUserTrackingUsageDescription": "This app does not track you. All analysis is done anonymously."
+        "NSUserTrackingUsageDescription": "This app does not track you. All analysis is done anonymously.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ],
+        "NSPrivacyCollectedDataTypes": [],
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": []
       }
     },
     "android": {
@@ -28,8 +44,17 @@
         "backgroundColor": "#3B82F6"
       },
       "package": "com.scamshield.app",
-      "permissions": [],
-      "edgeToEdgeEnabled": true
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.INTERNET"
+      ],
+      "edgeToEdgeEnabled": true,
+      "blockedPermissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -41,7 +66,16 @@
     "extra": {
       "eas": {
         "projectId": "YOUR_PROJECT_ID"
-      }
-    }
+      },
+      "SUPABASE_URL": "",
+      "SUPABASE_ANON_KEY": ""
+    },
+    "hooks": {
+      "postPublish": []
+    },
+    "privacy": "unlisted",
+    "primaryColor": "#8B5CF6",
+    "description": "AI-powered text scam detection app. Protect yourself from phishing, fraud, and smishing with instant message analysis.",
+    "githubUrl": "https://github.com/yourusername/scamshield"
   }
 }

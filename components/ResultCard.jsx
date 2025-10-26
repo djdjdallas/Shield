@@ -1,5 +1,5 @@
 // ResultCard component - displays analysis results with clear visual indicators
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { Colors } from '../constants/colors';
 import { GradientColors, getGradientByVerdict, AnimationDurations } from '../constants/glassStyles';
 
 // Component to display the analysis results
-export default function ResultCard({ result, message }) {
+const ResultCard = memo(function ResultCard({ result, message}) {
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
@@ -121,7 +121,7 @@ export default function ResultCard({ result, message }) {
   };
 
   // Share results function
-  const shareResults = async () => {
+  const shareResults = useCallback(async () => {
     try {
       const shareMessage = `⚠️ Scam Shield Analysis ⚠️\n\n` +
         `Verdict: ${getVerdictText()}\n` +
@@ -139,7 +139,7 @@ export default function ResultCard({ result, message }) {
     } catch (error) {
       console.error('Share error:', error);
     }
-  };
+  }, [result, message]);
 
   // Interpolate width for animated confidence bar
   const confidenceWidth = progressAnim.interpolate({
@@ -156,6 +156,9 @@ export default function ResultCard({ result, message }) {
           transform: [{ scale: scaleAnim }]
         }
       ]}
+      accessible={true}
+      accessibilityRole="summary"
+      accessibilityLabel={`Scan result: ${getVerdictText()}. Confidence: ${result.confidence} percent. Risk level: ${result.risk_level}. ${result.explanation}`}
     >
       {/* Main Verdict Card with Glassmorphism */}
       <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
@@ -394,7 +397,7 @@ export default function ResultCard({ result, message }) {
       )}
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -682,3 +685,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+
+export default ResultCard;

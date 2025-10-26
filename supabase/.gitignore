@@ -1,0 +1,7 @@
+# Supabase
+.branches
+.temp
+
+# Environment variables
+.env
+.env.local

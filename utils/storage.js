@@ -1,5 +1,6 @@
 // Storage utilities for managing app data with AsyncStorage
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logScanToSupabase } from './supabaseLogger';
 
 const STORAGE_KEYS = {
   SCAN_HISTORY: 'scan_history',
@@ -13,7 +14,7 @@ const STORAGE_KEYS = {
 const MAX_HISTORY_ITEMS = 50;
 
 // Save scan result to history
-export async function saveToHistory(message, result) {
+export async function saveToHistory(message, result, metadata = {}) {
   try {
     // Get existing history
     const history = await getScanHistory();
@@ -42,6 +43,11 @@ export async function saveToHistory(message, result) {
 
     // Update statistics
     await updateStatistics(result);
+
+    // Also log to Supabase (async, don't wait)
+    logScanToSupabase(message, result, metadata).catch(err => {
+      console.log('Could not sync to cloud:', err.message);
+    });
 
     return newEntry;
   } catch (error) {
