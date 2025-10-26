@@ -62,7 +62,7 @@ export default function SettingsScreen() {
       try {
         await Share.share({
           message: jsonData,
-          title: 'Scam Shield History Export',
+          title: 'Defendr History Export',
         });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
@@ -164,7 +164,7 @@ export default function SettingsScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Scam Shield {Constants.expoConfig?.version || '1.0.0'}
+            Defendr {Constants.expoConfig?.version || '1.0.0'}
           </Text>
           <Text style={styles.footerSubtext}>
             Protecting you from digital threats

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Scam Shield",
-    "slug": "scam-shield",
+    "name": "Defendr",
+    "slug": "defendr",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +16,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.scamshield.app",
+      "bundleIdentifier": "com.defendr.app",
       "buildNumber": "1",
       "infoPlist": {
         "NSClipboardUsageDescription": "This app needs clipboard access to analyze suspicious messages you've copied.",
@@ -45,7 +45,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#3B82F6"
       },
-      "package": "com.scamshield.app",
+      "package": "com.defendr.app",
       "versionCode": 1,
       "permissions": [
         "android.permission.INTERNET"
@@ -61,7 +61,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "scamshield",
+    "scheme": "defendr",
     "plugins": [
       "expo-router"
     ],
@@ -79,7 +79,7 @@
     "privacy": "unlisted",
     "primaryColor": "#8B5CF6",
     "description": "AI-powered text scam detection app. Protect yourself from phishing, fraud, and smishing with instant message analysis.",
-    "githubUrl": "https://github.com/yourusername/scamshield",
+    "githubUrl": "https://github.com/djdallas/defendr",
     "owner": "djdallas",
     "runtimeVersion": {
       "policy": "appVersion"

@@ -55,7 +55,7 @@ export default function InfoScreen() {
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>Paste & Analyze</Text>
               <Text style={styles.stepDescription}>
-                Open Scam Shield and paste the message for instant analysis
+                Open Defendr and paste the message for instant analysis
               </Text>
             </View>
           </View>
@@ -270,12 +270,12 @@ export default function InfoScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <MaterialIcons name="info-outline" size={24} color={Colors.primary} />
-          <Text style={styles.sectionTitle}>About Scam Shield</Text>
+          <Text style={styles.sectionTitle}>About Defendr</Text>
         </View>
 
         <View style={styles.card}>
           <Text style={styles.aboutText}>
-            Scam Shield uses advanced AI technology powered by Claude (Anthropic) to analyze text messages and identify potential scams. Our mission is to protect people from the billion-dollar text scam epidemic.
+            Defendr uses advanced AI technology powered by Claude (Anthropic) to analyze text messages and identify potential scams. Our mission is to protect people from the billion-dollar text scam epidemic.
           </Text>
 
           <View style={styles.divider} />
@@ -325,7 +325,7 @@ export default function InfoScreen() {
       {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>
-          Stay vigilant. Stay safe. Use Scam Shield.
+          Stay vigilant. Stay safe. Use Defendr.
         </Text>
         <Text style={styles.versionText}>Version 1.0.0</Text>
       </View>

@@ -211,7 +211,7 @@ export default function OnboardingScreen({ onComplete }) {
             currentSlide.isPermission && !permissionGranted
               ? 'Grant clipboard access'
               : currentIndex === ONBOARDING_SLIDES.length - 1
-              ? 'Get started with Scam Shield'
+              ? 'Get started with Defendr'
               : 'Next slide'
           }
           accessibilityHint={

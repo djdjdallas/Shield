@@ -1,4 +1,4 @@
-// Main scanner screen - the heart of Scam Shield
+// Main scanner screen - the heart of Defendr
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   View,
@@ -230,7 +230,7 @@ export default function ScannerScreen() {
             style={[styles.header, { opacity: fadeAnim }]}
             accessible={true}
             accessibilityRole="header"
-            accessibilityLabel="Scam Shield Scanner"
+            accessibilityLabel="Defendr Scanner"
           >
             <LinearGradient
               colors={[Colors.primary, Colors.purple, Colors.pink]}

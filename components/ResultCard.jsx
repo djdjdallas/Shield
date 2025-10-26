@@ -123,14 +123,14 @@ const ResultCard = memo(function ResultCard({ result, message}) {
   // Share results function
   const shareResults = useCallback(async () => {
     try {
-      const shareMessage = `⚠️ Scam Shield Analysis ⚠️\n\n` +
+      const shareMessage = `⚠️ Defendr Analysis ⚠️\n\n` +
         `Verdict: ${getVerdictText()}\n` +
         `Confidence: ${result.confidence}%\n` +
         `Risk Level: ${result.risk_level?.toUpperCase()}\n\n` +
         `${result.explanation}\n\n` +
         `Recommendation: ${result.action_recommended}\n\n` +
         `Analyzed message: "${message.substring(0, 100)}${message.length > 100 ? '...' : ''}"\n\n` +
-        `Stay safe! Download Scam Shield to protect yourself from text scams.`;
+        `Stay safe! Download Defendr to protect yourself from text scams.`;
 
       await Share.share({
         message: shareMessage,

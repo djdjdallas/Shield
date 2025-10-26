@@ -150,7 +150,7 @@ export default function SplashScreen({ onFinish }) {
             end={{ x: 1, y: 0 }}
             style={styles.titleGradient}
           >
-            <Text style={styles.title}>Scam Shield</Text>
+            <Text style={styles.title}>Defendr</Text>
           </LinearGradient>
 
           {/* Tagline */}
