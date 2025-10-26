@@ -23,6 +23,10 @@
     "production": {
       "distribution": "store",
       "autoIncrement": true,
+      "node": "20.11.0",
+      "npm": {
+        "installCommand": "npm install"
+      },
       "ios": {
         "buildConfiguration": "Release",
         "autoIncrement": true
