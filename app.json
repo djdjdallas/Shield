@@ -30,7 +30,9 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
           }
         ],
         "NSPrivacyCollectedDataTypes": [],
@@ -65,10 +67,11 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "YOUR_PROJECT_ID"
+        "projectId": "126fc08e-7ac4-4f23-9dee-9c15b8e2b197"
       },
       "SUPABASE_URL": "",
-      "SUPABASE_ANON_KEY": ""
+      "SUPABASE_ANON_KEY": "",
+      "router": {}
     },
     "hooks": {
       "postPublish": []
@@ -76,6 +79,13 @@
     "privacy": "unlisted",
     "primaryColor": "#8B5CF6",
     "description": "AI-powered text scam detection app. Protect yourself from phishing, fraud, and smishing with instant message analysis.",
-    "githubUrl": "https://github.com/yourusername/scamshield"
+    "githubUrl": "https://github.com/yourusername/scamshield",
+    "owner": "djdallas",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/126fc08e-7ac4-4f23-9dee-9c15b8e2b197"
+    }
   }
 }
