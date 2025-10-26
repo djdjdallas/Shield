@@ -148,12 +148,15 @@ export default function ScannerScreen() {
       }
 
       // Now try to get Claude's analysis for more detailed results
+      const serverlessEndpoint = process.env.EXPO_PUBLIC_API_ENDPOINT;
       const apiKey =
         Constants.expoConfig?.extra?.ANTHROPIC_API_KEY ||
         Constants.manifest?.extra?.ANTHROPIC_API_KEY ||
         process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
-      if (!apiKey || apiKey === "YOUR_ANTHROPIC_API_KEY_HERE") {
-        // No API key configured - use offline result only
+
+      // Check if we have either a serverless endpoint OR an API key
+      if (!serverlessEndpoint && (!apiKey || apiKey === "YOUR_ANTHROPIC_API_KEY_HERE")) {
+        // No API endpoint or key configured - use offline result only
         if (!offlineResult) {
           setResult({
             verdict: "unknown",
@@ -168,7 +171,7 @@ export default function ScannerScreen() {
           });
         }
       } else {
-        // Call Claude API for full analysis
+        // Call Claude API for full analysis (will use serverless endpoint if available)
         const claudeResult = await analyzeWithClaude(message, apiKey);
 
         if (claudeResult) {
