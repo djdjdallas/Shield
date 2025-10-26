@@ -48,3 +48,6 @@ supabase/.temp
 
 # .md files
 *.md
+
+#sql
+*.sql
