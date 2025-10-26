@@ -23,9 +23,9 @@
     "production": {
       "distribution": "store",
       "autoIncrement": true,
-      "node": "20.11.0",
-      "npm": {
-        "installCommand": "npm install"
+      "node": "20.19.4",
+      "cache": {
+        "disabled": true
       },
       "ios": {
         "buildConfiguration": "Release",
