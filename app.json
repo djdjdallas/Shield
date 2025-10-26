@@ -68,7 +68,10 @@
     "extra": {
       "SUPABASE_URL": "",
       "SUPABASE_ANON_KEY": "",
-      "router": {}
+      "router": {},
+      "eas": {
+        "projectId": "444451a3-92b7-4171-aa41-7dee9e6d1236"
+      }
     },
     "hooks": {
       "postPublish": []

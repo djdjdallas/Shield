@@ -39,7 +39,7 @@
         "EXPO_PUBLIC_API_ENDPOINT": "https://zrtbvmmpdetdrtzeoazz.supabase.co/functions/v1/analyze",
         "EXPO_PUBLIC_SENTRY_DSN": "YOUR_SENTRY_DSN_HERE",
         "EXPO_PUBLIC_SUPABASE_URL": "https://zrtbvmmpdetdrtzeoazz.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "YOUR_SUPABASE_ANON_KEY"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpydGJ2bW1wZGV0ZHJ0emVvYXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MDU5OTEsImV4cCI6MjA3Njk4MTk5MX0.ROOhpf3cIbw2xVpY6LcrkIb-O3QXjcDIgw4Iu0Vr7Gk"
       },
       "channel": "production"
     }
